@@ -1,0 +1,16 @@
+{
+  "name": "odgn-live-reload",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {},
+  "bin": {
+    "odgn-live-reload": "bin/reload.js"
+  },
+  "author": "Alexander Veenenedaal <alex@opendoorgonorth.com>",
+  "license": "ISC",
+  "dependencies": {
+    "minimist": "^1.2.0",
+    "ws": "^1.1.1"
+  }
+}
