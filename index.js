@@ -1,21 +1,36 @@
 const Http = require('http');
+const Path = require('path');
 const Url = require('url');
 const WebSocket = require('ws');
 const Fs = require('fs');
 const EventEmitter = require('events');
 
-// class EventBus extends EventEmitter{};
 const eventBus = new EventEmitter();
 
 
-module.exports = function ODGNLiveReloadServer(options){
+
+module.exports = function ODGNLiveReloadServer(options) {
+    const host = readValue(options,'host', 'localhost');
+    const port = readValue(options,'port', 37589);
+    const silent = readValue(options,'silent', true);
+    const reloadOnReconnect = readValue(options,'reloadOnReconnect', true);
+
+    const browserJS = buildBrowserJs(host, port, reloadOnReconnect,silent);
+
     const server = Http.createServer(handleRequest);
     const wss = new WebSocket.Server({ server });
-    
-    const host = options.host || 'localhost';
-    const port = options.port || 37589;
 
-    const browserJS = buildBrowserJs(host,port);
+    function handleRequest(request, response) {
+        const { pathname, query } = Url.parse(request.url, true);
+        if (pathname === '/reload') {
+            eventBus.emit('reload');
+        } else if (pathname === '/exit') {
+            process.exit();
+        } else if (pathname === '/reload.js') {
+            return response.end(browserJS);
+        }
+        return response.end();
+    }
 
     wss.on('connection', function connection(ws) {
         const location = Url.parse(ws.upgradeReq.url, true);
@@ -28,11 +43,11 @@ module.exports = function ODGNLiveReloadServer(options){
 
         eventBus.on('reload', () => {
             ws.send('reload');
-        })
+        });
     });
 
     server.listen(port, function listening(err) {
-        if( err ){
+        if (err) {
             throw err;
         }
         console.log('Listening on %d', server.address().port);
@@ -40,31 +55,33 @@ module.exports = function ODGNLiveReloadServer(options){
 
     eventBus.on('reload', () => {
         console.log('eventbus reload');
-    })
-}
+    });
+};
 
-
-function handleRequest(request,response){
-    const {pathname,query} = Url.parse(request.url,true);
-    if( pathname === '/reload' ){
-        eventBus.emit('reload');
-    } else if( pathname === '/exit' ){
-        process.exit();
-    } else if( pathname === '/reload.js'){
-        return response.end(browserJS);
-    }
-    return response.end();
-}
-
-
-function buildBrowserJs(host,port){
+function buildBrowserJs(host, port, reloadOnReconnect, silent) {
     // load the browser.js
-    let result = Fs.readFileSync('./browser.js', 'utf8');
+    const path = Path.join(__dirname, 'browser.js');
+    let result = Fs.readFileSync(path, 'utf8');
+
+    let browserOptions = {
+        host,
+        port,
+        reloadOnReconnect,
+        silent
+    };
 
     // insert the port into the browser.js
-    result = result.replace( new RegExp(/\$\{PORT\}/, 'g'), port );
+    // result = result.replace(new RegExp(/\$\{PORT\}/, 'g'), port);
     // insert the host into the browser.js
-    result = result.replace( new RegExp(/\$\{HOST\}/, 'g'), "'" + host + "'" );
+    // result = result.replace(new RegExp(/\$\{HOST\}/, 'g'), "'" + host + "'");
+
+    result = result.replace(new RegExp(/\$\{OPTIONS\}/, 'g'), JSON.stringify(browserOptions) );
 
     return result;
+}
+
+function readValue(obj,key,defaultTo=''){
+    if( !obj ){ return defaultTo; }
+    if( obj[key] === undefined ){ return defaultTo; }
+    return obj[key];
 }
