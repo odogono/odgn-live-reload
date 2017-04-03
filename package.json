@@ -1,14 +1,30 @@
 {
   "name": "odgn-live-reload",
-  "version": "0.1.0",
-  "description": "",
+  "version": "1.0.0",
+  "description": "a live reload server and client",
   "main": "index.js",
   "scripts": {},
   "bin": {
     "odgn-live-reload": "bin/reload.js"
   },
   "author": "Alexander Veenenedaal <alex@opendoorgonorth.com>",
-  "license": "ISC",
+  "contributors": [
+    {
+      "name": "Alexander Veenendaal",
+      "email": "alex@opendoorgonorth.com"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/odogono/odgn-live-reload.git"
+  },
+  "bugs": {
+    "url": "https://github.com/odogono/odgn-live-reload/issues"
+  },
+  "keywords": [
+    "live-reload"
+  ],
+  "license": "MIT",
   "dependencies": {
     "minimist": "^1.2.0",
     "ws": "^2.2.3"
